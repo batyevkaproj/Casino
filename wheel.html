@@ -3,105 +3,163 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Simple JS Slot Machine</title>
+    <title>Торпеда Style Slot Machine</title>
     <style>
+        :root {
+            --reel-height: 100px; /* Define reel height as CSS variable */
+            --symbol-size: 50px; /* Define symbol size */
+            --reel-bg: #222;
+            --panel-bg: linear-gradient(to bottom, #666, #444);
+            --border-color: #111;
+            --highlight-color: #eee;
+            --button-bg: linear-gradient(to bottom, #5cb85c, #4cae4c);
+            --button-hover-bg: linear-gradient(to bottom, #4cae4c, #449d44);
+            --button-disabled-bg: #777;
+            --text-color: #fff;
+        }
+
         body {
-            font-family: 'Arial', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
             justify-content: center;
             align-items: center;
             min-height: 100vh;
-            background-color: #f0f0f0;
-            flex-direction: column; /* Align items vertically */
+            background-color: #3a3a3a;
+            flex-direction: column;
         }
 
         #slot-machine {
-            background-color: #fff;
-            border: 5px solid #333;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            background: var(--panel-bg);
+            border: 5px solid var(--border-color);
+            border-radius: 25px; /* More rounded */
+            padding: 30px 40px;
+            box-shadow: 0 10px 20px rgba(0,0,0,0.4), inset 0 2px 5px rgba(255,255,255,0.1);
             text-align: center;
+        }
+
+        h1 {
+            color: var(--highlight-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+            margin-bottom: 25px;
+            font-weight: bold;
+            letter-spacing: 1px;
         }
 
         #reels {
             display: flex;
             justify-content: center;
-            gap: 15px; /* Space between reels */
-            margin-bottom: 20px;
-            overflow: hidden; /* Hide overflow if symbols get too wide */
-            background-color: #e0e0e0;
-            padding: 10px;
-            border-radius: 5px;
+            gap: 20px; /* More space between reels */
+            margin-bottom: 30px;
+            background-color: #1a1a1a; /* Darker inset background */
+            padding: 15px;
+            border-radius: 10px;
+            border: 2px solid #000;
+             box-shadow: inset 0 3px 8px rgba(0,0,0,0.5);
         }
 
         .reel {
-            width: 80px;
-            height: 100px;
-            border: 2px solid #999;
-            background-color: #fff;
+            width: 90px; /* Slightly wider */
+            height: var(--reel-height);
+            background-color: var(--reel-bg);
+            border: 3px solid #333; /* Thicker border */
+            border-radius: 8px;
+            overflow: hidden; /* Crucial: Hides overflowing symbols */
+            position: relative; /* Needed for absolute positioning if used, but flex works */
+            box-shadow: inset 0 0 10px rgba(0,0,0,0.6);
+        }
+
+        .reel-symbols {
+            display: flex;
+            flex-direction: column; /* Stack symbols vertically */
+            /* The translateY will be controlled by JS/CSS animation */
+            transition: transform 0.8s ease-out; /* Smooth stopping transition */
+        }
+
+        .reel.spinning .reel-symbols {
+            /* Apply continuous animation when spinning */
+            transition: none; /* Disable smooth stop transition during spin */
+            animation: spinReel 0.1s linear infinite;
+        }
+
+        .symbol {
+            width: 100%;
+            height: var(--reel-height); /* Each symbol takes full reel height */
             display: flex;
             justify-content: center;
             align-items: center;
-            font-size: 50px; /* Make symbols large */
-            border-radius: 5px;
-            transition: background-color 0.1s ease; /* Subtle feedback */
+            font-size: var(--symbol-size);
+            color: var(--text-color);
+            flex-shrink: 0; /* Prevent symbols from shrinking */
+             /* Add some shadow for depth */
+            text-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
         }
 
-        .reel.spinning {
-             /* Optional: visual cue during spin */
-            /* background-color: #f8f8f8; */
-            /* animation: shake 0.1s infinite linear; */
+        /* The actual spinning animation */
+        @keyframes spinReel {
+            from {
+                transform: translateY(0);
+            }
+            to {
+                 /* Move up by one symbol height */
+                transform: translateY(calc(-1 * var(--reel-height)));
+            }
         }
-
-        /* Optional shake animation */
-        /* @keyframes shake {
-            0%, 100% { transform: translateX(0); }
-            50% { transform: translateX(2px); }
-        } */
 
 
         #controls {
-            margin-top: 20px;
+            margin-top: 25px;
         }
 
         #spinButton {
-            padding: 15px 30px;
-            font-size: 1.2em;
+            padding: 15px 40px; /* Wider button */
+            font-size: 1.4em;
+            font-weight: bold;
             cursor: pointer;
-            border: none;
-            border-radius: 5px;
-            background-color: #4CAF50; /* Green */
+            border: 2px solid #333;
+            border-radius: 10px;
+            background: var(--button-bg);
             color: white;
-            transition: background-color 0.2s ease;
+            text-shadow: 1px 1px 1px rgba(0,0,0,0.5);
+            transition: background 0.2s ease, transform 0.1s ease;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
         }
 
         #spinButton:hover:not(:disabled) {
-            background-color: #45a049;
+            background: var(--button-hover-bg);
+             box-shadow: 0 6px 8px rgba(0,0,0,0.35);
+             transform: translateY(-1px);
+        }
+        #spinButton:active:not(:disabled) {
+             transform: translateY(1px);
+              box-shadow: 0 2px 3px rgba(0,0,0,0.3);
         }
 
         #spinButton:disabled {
-            background-color: #cccccc;
+            background: var(--button-disabled-bg);
             cursor: not-allowed;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.3);
+            color: #ccc;
         }
 
         #result {
-            margin-top: 20px;
-            font-size: 1.5em;
+            margin-top: 25px;
+            font-size: 1.6em;
             font-weight: bold;
-            min-height: 1.5em; /* Prevent layout shift */
-            color: #333;
+            min-height: 1.6em;
+            color: var(--highlight-color);
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
         }
     </style>
 </head>
 <body>
 
     <div id="slot-machine">
-        <h1>Slot Machine</h1>
+        <h1>ТОРПЕДА SLOTS</h1>
         <div id="reels">
-            <div class="reel" id="reel1">❓</div>
-            <div class="reel" id="reel2">❓</div>
-            <div class="reel" id="reel3">❓</div>
+            <!-- Reels will be populated by JS -->
+            <div class="reel" id="reel1"><div class="reel-symbols"></div></div>
+            <div class="reel" id="reel2"><div class="reel-symbols"></div></div>
+            <div class="reel" id="reel3"><div class="reel-symbols"></div></div>
         </div>
         <div id="controls">
             <button id="spinButton">Spin</button>
@@ -111,23 +169,26 @@
 
     <script>
         // --- Configuration ---
-        const symbols = ["🍒", "🍋", "🍊", "🍉", "⭐", "🔔", "💎"];
+        const symbols = ["🍒", "🍋", "🍊", "🍉", "⭐", "🔔", "💎", "🍇", "🍀"]; // Added more symbols
+        const reelHeight = 100; // Must match --reel-height in CSS!
+        const symbolsPerReel = 30; // How many symbols to generate for the visual scroll
         const spinDurationBase = 1000; // Base duration for first reel spin in ms
-        const spinDurationIncrement = 500; // Additional spin time per reel
-        const spinIntervalTime = 80; // How fast symbols change during spin (ms)
+        const spinDurationIncrement = 400; // Additional spin time per reel
 
         // --- DOM Elements ---
-        const reel1 = document.getElementById('reel1');
-        const reel2 = document.getElementById('reel2');
-        const reel3 = document.getElementById('reel3');
+        const reelElements = [
+            document.getElementById('reel1'),
+            document.getElementById('reel2'),
+            document.getElementById('reel3')
+        ];
+        const reelSymbolContainers = reelElements.map(r => r.querySelector('.reel-symbols'));
         const spinButton = document.getElementById('spinButton');
         const resultDisplay = document.getElementById('result');
-        const reels = [reel1, reel2, reel3];
 
         // --- Game State ---
         let spinning = false;
-        let reelIntervals = [];
-        let finalSymbols = [];
+        let finalSymbols = [null, null, null];
+        let reelTimeouts = [];
 
         // --- Functions ---
 
@@ -139,12 +200,50 @@
         }
 
         /**
-         * Updates a single reel with a random symbol.
-         * @param {HTMLElement} reelElement - The reel div to update.
+         * Creates a symbol element.
+         * @param {string} symbolChar - The character to display.
          */
-        function updateReel(reelElement) {
-            reelElement.textContent = getRandomSymbol();
-            reelElement.classList.add('spinning'); // Add visual cue
+        function createSymbolElement(symbolChar) {
+            const div = document.createElement('div');
+            div.classList.add('symbol');
+            div.textContent = symbolChar;
+            return div;
+        }
+
+        /**
+         * Populates a reel container with symbols.
+         * The first symbol in the generated list will be the visual "top".
+         * @param {HTMLElement} reelContainer - The .reel-symbols container.
+         */
+        function populateReel(reelContainer) {
+            // Clear existing symbols
+            reelContainer.innerHTML = '';
+            // Add symbols
+            for (let i = 0; i < symbolsPerReel; i++) {
+                reelContainer.appendChild(createSymbolElement(getRandomSymbol()));
+            }
+            // Ensure it starts at a non-animated position
+             reelContainer.style.transform = 'translateY(0)';
+        }
+
+        /**
+         * Calculates the final Y-transform position for a reel to stop at a specific symbol.
+         * @param {HTMLElement} reelContainer - The .reel-symbols container.
+         * @param {number} targetSymbolIndex - The index in the *generated* list to stop at (0-based).
+         */
+        function calculateStopPosition(targetSymbolIndex) {
+             // We want the target symbol to be in the *second* visual slot
+             // because the animation moves one full symbol height per cycle.
+             // So, visually, the reel stops showing symbols[targetIndex-1], symbols[targetIndex], symbols[targetIndex+1]
+             // But the *actual* final symbol we evaluate is symbols[targetIndex].
+             // The transform needs to position the *top* of the targetSymbolIndex element
+             // at the top of the visible reel area.
+
+             // Let's adjust: We want the symbol at targetSymbolIndex to be centered.
+             // The total height of symbols above the target is targetSymbolIndex * reelHeight.
+             // The transform is negative because we move upwards.
+             return - (targetSymbolIndex * reelHeight);
+
         }
 
         /**
@@ -152,12 +251,13 @@
          */
         function checkResult() {
             // Simple win condition: all three symbols match
-            if (finalSymbols[0] === finalSymbols[1] && finalSymbols[1] === finalSymbols[2]) {
-                resultDisplay.textContent = `🎉 WINNER! ${finalSymbols[0]}${finalSymbols[1]}${finalSymbols[2]} 🎉`;
-                resultDisplay.style.color = 'green';
+             console.log("Final Symbols:", finalSymbols);
+            if (finalSymbols[0] && finalSymbols[0] === finalSymbols[1] && finalSymbols[1] === finalSymbols[2]) {
+                resultDisplay.textContent = `🎉 JACKPOT! ${finalSymbols[0]}${finalSymbols[1]}${finalSymbols[2]} 🎉`;
+                resultDisplay.style.color = '#ffdd00'; // Gold color for win
             } else {
-                resultDisplay.textContent = "❌ Try Again! ❌";
-                 resultDisplay.style.color = 'red';
+                resultDisplay.textContent = "❌ Spin Again! ❌";
+                resultDisplay.style.color = '#ff6b6b'; // Reddish for loss
             }
             spinning = false;
             spinButton.disabled = false; // Re-enable button
@@ -167,48 +267,77 @@
          * Starts the spinning process.
          */
         function spin() {
-            if (spinning) return; // Don't spin if already spinning
+            if (spinning) return;
 
             spinning = true;
-            spinButton.disabled = true; // Disable button during spin
+            spinButton.disabled = true;
             resultDisplay.textContent = "Spinning...";
-            resultDisplay.style.color = '#333'; // Reset result color
-            finalSymbols = []; // Reset final symbols
-            reelIntervals.forEach(clearInterval); // Clear any previous intervals
-            reelIntervals = [];
+            resultDisplay.style.color = 'var(--highlight-color)'; // Reset result color
+            finalSymbols = [null, null, null]; // Reset final symbols
+            reelTimeouts.forEach(clearTimeout); // Clear any previous stop timeouts
+            reelTimeouts = [];
 
-            reels.forEach((reel, index) => {
-                // Start interval to rapidly change symbols
-                const intervalId = setInterval(() => {
-                    updateReel(reel);
-                }, spinIntervalTime);
-                reelIntervals.push(intervalId);
+            reelSymbolContainers.forEach((container, index) => {
+                // 1. Repopulate reel with random symbols to ensure variety each spin
+                populateReel(container);
+                const symbolsInReel = Array.from(container.children);
 
-                // Set timeout to stop this reel after a delay
+                // 2. Choose a random final symbol index (ensure it's not too close to the ends)
+                // Let's aim for the symbol visually landing in the middle slot.
+                 const targetIndex = Math.floor(Math.random() * (symbolsPerReel - 5)) + 2; // Avoid edges
+                 finalSymbols[index] = symbolsInReel[targetIndex].textContent; // Store the actual symbol character
+
+                // 3. Calculate final position
+                const stopPosition = calculateStopPosition(targetIndex);
+
+
+                 // 4. Reset transform before adding spinning class to ensure smooth start
+                container.style.transition = 'none'; // Disable transition for reset
+                container.style.transform = 'translateY(0)'; // Reset position quickly
+                container.offsetHeight; // Force reflow/repaint
+
+
+                // 5. Add spinning class to start CSS animation
+                container.parentElement.classList.add('spinning'); // Add to the .reel parent
+
+                // 6. Set timeout to stop this reel
                 const stopDelay = spinDurationBase + (index * spinDurationIncrement);
-                setTimeout(() => {
-                    clearInterval(intervalId); // Stop changing symbols
-                    const finalSymbol = getRandomSymbol(); // Determine final symbol
-                    reel.textContent = finalSymbol;
-                    reel.classList.remove('spinning'); // Remove visual cue
-                    finalSymbols[index] = finalSymbol;
+                reelTimeouts[index] = setTimeout(() => {
+                    // Remove spinning class
+                    container.parentElement.classList.remove('spinning');
 
-                    // If this is the last reel to stop, check the result
-                    if (index === reels.length - 1) {
-                        checkResult();
+                    // Apply smooth transition and final position
+                    container.style.transition = 'transform 0.8s ease-out'; // Make sure transition is back
+                    container.style.transform = `translateY(${stopPosition}px)`;
+
+
+                    // If this is the last reel to stop, check the result after the transition ends
+                    if (index === reelSymbolContainers.length - 1) {
+                        // Wait for the CSS transition to finish before checking result
+                        container.addEventListener('transitionend', checkResult, { once: true });
                     }
+
                 }, stopDelay);
             });
         }
 
+        // --- Initialization ---
+        function initialize() {
+            reelSymbolContainers.forEach(populateReel);
+            resultDisplay.textContent = "Press Spin to Play!";
+             // Set initial symbols visually (optional, can just show random ones from populate)
+             reelSymbolContainers.forEach(container => {
+                 const initialStopIndex = 2; // Show the 3rd symbol initially
+                 container.style.transform = `translateY(${calculateStopPosition(initialStopIndex)}px)`;
+             });
+        }
+
+
         // --- Event Listeners ---
         spinButton.addEventListener('click', spin);
 
-        // --- Initial State ---
-        // Optionally set initial symbols on load
-        reels.forEach(reel => reel.textContent = getRandomSymbol());
-        resultDisplay.textContent = "Press Spin to Play!";
-
+        // --- Initial Setup ---
+        initialize();
 
     </script>
 

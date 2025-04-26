@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simple JS Slot Machine</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: #f0f0f0;
+            flex-direction: column; /* Align items vertically */
+        }
+
+        #slot-machine {
+            background-color: #fff;
+            border: 5px solid #333;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+            text-align: center;
+        }
+
+        #reels {
+            display: flex;
+            justify-content: center;
+            gap: 15px; /* Space between reels */
+            margin-bottom: 20px;
+            overflow: hidden; /* Hide overflow if symbols get too wide */
+            background-color: #e0e0e0;
+            padding: 10px;
+            border-radius: 5px;
+        }
+
+        .reel {
+            width: 80px;
+            height: 100px;
+            border: 2px solid #999;
+            background-color: #fff;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 50px; /* Make symbols large */
+            border-radius: 5px;
+            transition: background-color 0.1s ease; /* Subtle feedback */
+        }
+
+        .reel.spinning {
+             /* Optional: visual cue during spin */
+            /* background-color: #f8f8f8; */
+            /* animation: shake 0.1s infinite linear; */
+        }
+
+        /* Optional shake animation */
+        /* @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            50% { transform: translateX(2px); }
+        } */
+
+
+        #controls {
+            margin-top: 20px;
+        }
+
+        #spinButton {
+            padding: 15px 30px;
+            font-size: 1.2em;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            transition: background-color 0.2s ease;
+        }
+
+        #spinButton:hover:not(:disabled) {
+            background-color: #45a049;
+        }
+
+        #spinButton:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+        }
+
+        #result {
+            margin-top: 20px;
+            font-size: 1.5em;
+            font-weight: bold;
+            min-height: 1.5em; /* Prevent layout shift */
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="slot-machine">
+        <h1>Slot Machine</h1>
+        <div id="reels">
+            <div class="reel" id="reel1">❓</div>
+            <div class="reel" id="reel2">❓</div>
+            <div class="reel" id="reel3">❓</div>
+        </div>
+        <div id="controls">
+            <button id="spinButton">Spin</button>
+        </div>
+        <div id="result">Press Spin to Play!</div>
+    </div>
+
+    <script>
+        // --- Configuration ---
+        const symbols = ["🍒", "🍋", "🍊", "🍉", "⭐", "🔔", "💎"];
+        const spinDurationBase = 1000; // Base duration for first reel spin in ms
+        const spinDurationIncrement = 500; // Additional spin time per reel
+        const spinIntervalTime = 80; // How fast symbols change during spin (ms)
+
+        // --- DOM Elements ---
+        const reel1 = document.getElementById('reel1');
+        const reel2 = document.getElementById('reel2');
+        const reel3 = document.getElementById('reel3');
+        const spinButton = document.getElementById('spinButton');
+        const resultDisplay = document.getElementById('result');
+        const reels = [reel1, reel2, reel3];
+
+        // --- Game State ---
+        let spinning = false;
+        let reelIntervals = [];
+        let finalSymbols = [];
+
+        // --- Functions ---
+
+        /**
+         * Gets a random symbol from the symbols array.
+         */
+        function getRandomSymbol() {
+            return symbols[Math.floor(Math.random() * symbols.length)];
+        }
+
+        /**
+         * Updates a single reel with a random symbol.
+         * @param {HTMLElement} reelElement - The reel div to update.
+         */
+        function updateReel(reelElement) {
+            reelElement.textContent = getRandomSymbol();
+            reelElement.classList.add('spinning'); // Add visual cue
+        }
+
+        /**
+         * Checks the results after all reels have stopped.
+         */
+        function checkResult() {
+            // Simple win condition: all three symbols match
+            if (finalSymbols[0] === finalSymbols[1] && finalSymbols[1] === finalSymbols[2]) {
+                resultDisplay.textContent = `🎉 WINNER! ${finalSymbols[0]}${finalSymbols[1]}${finalSymbols[2]} 🎉`;
+                resultDisplay.style.color = 'green';
+            } else {
+                resultDisplay.textContent = "❌ Try Again! ❌";
+                 resultDisplay.style.color = 'red';
+            }
+            spinning = false;
+            spinButton.disabled = false; // Re-enable button
+        }
+
+        /**
+         * Starts the spinning process.
+         */
+        function spin() {
+            if (spinning) return; // Don't spin if already spinning
+
+            spinning = true;
+            spinButton.disabled = true; // Disable button during spin
+            resultDisplay.textContent = "Spinning...";
+            resultDisplay.style.color = '#333'; // Reset result color
+            finalSymbols = []; // Reset final symbols
+            reelIntervals.forEach(clearInterval); // Clear any previous intervals
+            reelIntervals = [];
+
+            reels.forEach((reel, index) => {
+                // Start interval to rapidly change symbols
+                const intervalId = setInterval(() => {
+                    updateReel(reel);
+                }, spinIntervalTime);
+                reelIntervals.push(intervalId);
+
+                // Set timeout to stop this reel after a delay
+                const stopDelay = spinDurationBase + (index * spinDurationIncrement);
+                setTimeout(() => {
+                    clearInterval(intervalId); // Stop changing symbols
+                    const finalSymbol = getRandomSymbol(); // Determine final symbol
+                    reel.textContent = finalSymbol;
+                    reel.classList.remove('spinning'); // Remove visual cue
+                    finalSymbols[index] = finalSymbol;
+
+                    // If this is the last reel to stop, check the result
+                    if (index === reels.length - 1) {
+                        checkResult();
+                    }
+                }, stopDelay);
+            });
+        }
+
+        // --- Event Listeners ---
+        spinButton.addEventListener('click', spin);
+
+        // --- Initial State ---
+        // Optionally set initial symbols on load
+        reels.forEach(reel => reel.textContent = getRandomSymbol());
+        resultDisplay.textContent = "Press Spin to Play!";
+
+
+    </script>
+
+</body>
+</html>
